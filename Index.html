@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redmi Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; background: #1a1a1a; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; background: #000; margin: 0 auto; }
+        #ui { position: absolute; top: 20px; left: 20px; color: #00ffcc; font-size: 24px; font-weight: bold; display: none; }
+        
+        /* Start Screen Styling */
+        #startScreen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            text-align: center;
+            z-index: 10;
+        }
+        h1 { font-size: 60px; color: #00ffcc; margin-bottom: 10px; text-shadow: 0 0 20px #00ffcc; }
+        p { font-size: 20px; color: #ccc; }
+        .blink { animation: blinker 1.5s linear infinite; color: #ff4444; font-weight: bold; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>REDMI RUNNER</h1>
+        <p>Avoid the falling red blocks!</p>
+        <p class="blink">TAP TO START</p>
+    </div>
+
+    <div id="ui">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const startScreen = document.getElementById('startScreen');
+        const ui = document.getElementById('ui');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let gameActive = false; // Game starts as "false" now
+        const player = { x: canvas.width/2, y: canvas.height - 100, size: 45, color: '#00ffcc' };
+        const obstacles = [];
+
+        // Start Game Function
+        function startGame() {
+            gameActive = true;
+            startScreen.style.display = 'none';
+            ui.style.display = 'block';
+            spawnObstacle();
+            draw();
+        }
+
+        // Listen for the first tap/click
+        window.addEventListener('touchstart', () => { if(!gameActive) startGame(); });
+        window.addEventListener('mousedown', () => { if(!gameActive) startGame(); });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            const touch = e.touches[0];
+            player.x = touch.clientX - player.size / 2;
+        });
+
+        function spawnObstacle() {
+            if (!gameActive) return;
+            const size = Math.random() * 60 + 20;
+            obstacles.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                size: size,
+                speed: 4 + (score / 8) 
+            });
+            setTimeout(spawnObstacle, 1000 - Math.min(score * 10, 700)); 
+        }
+
+        function update() {
+            if (!gameActive) return;
+
+            obstacles.forEach((obs, index) => {
+                obs.y += obs.speed;
+                
+                if (player.x < obs.x + obs.size && player.x + player.size > obs.x &&
+                    player.y < obs.y + obs.size && player.y + player.size > obs.y) {
+                    gameActive = false;
+                    alert("GAME OVER! \nFinal Score: " + score);
+                    location.reload();
+                }
+
+                if (obs.y > canvas.height) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreElement.innerText = score;
+                }
+            });
+        }
+
+        function draw() {
+            if (!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Neon Player
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = player.color;
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+
+            // Enemy Blocks
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff4444';
+            ctx.fillStyle = '#ff4444';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x, obs.y, obs.size, obs.size);
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+    </script>
+</body>
+</html>
