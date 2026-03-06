@@ -7,7 +7,6 @@
         body { margin: 0; background: #1a1a1a; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         canvas { display: block; background: #000; margin: 0 auto; }
         #ui { position: absolute; top: 20px; left: 20px; color: #00ffcc; font-size: 24px; font-weight: bold; display: none; }
-        
         /* Start Screen Styling */
         #startScreen {
             position: absolute;
@@ -47,6 +46,10 @@
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        // Load enemy image
+        const enemyImage = new Image();
+        enemyImage.src = 'https://i.imgur.com/5vkKopS.jpeg';
 
         let score = 0;
         let gameActive = false; // Game starts as "false" now
@@ -115,12 +118,17 @@
             ctx.fillStyle = player.color;
             ctx.fillRect(player.x, player.y, player.size, player.size);
 
-            // Enemy Blocks
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#ff4444';
-            ctx.fillStyle = '#ff4444';
+            // Enemy Blocks with Image
             obstacles.forEach(obs => {
-                ctx.fillRect(obs.x, obs.y, obs.size, obs.size);
+                if (enemyImage.complete) {
+                    ctx.drawImage(enemyImage, obs.x, obs.y, obs.size, obs.size);
+                } else {
+                    // Fallback to red rectangle while image loads
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ff4444';
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillRect(obs.x, obs.y, obs.size, obs.size);
+                }
             });
 
             update();
